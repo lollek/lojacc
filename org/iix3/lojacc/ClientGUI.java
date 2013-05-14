@@ -1,4 +1,4 @@
-/* ChatProj Part 1: Chat Client GUI
+/* lojacc ClientGUI
  * GUI Handling for Chat Applet
  * Requires ClientSocket from the same package
  */

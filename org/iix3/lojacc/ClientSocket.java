@@ -1,4 +1,4 @@
-/* ChatProj ClientSocket
+/* lojacc ClientSocket
  * This is a socket class for ClientGUI from the same package
  *
  * Scope is to connect to iix3.org @ port 7777, thus, everything is hardcoded

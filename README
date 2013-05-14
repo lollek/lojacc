@@ -13,12 +13,12 @@ GOALS:
 BUGS:
   Scroll (Win7 Chrome/Firefox/IE10)
 
-FEATURES:
-  Blink on stuff
+PLANNED FEATURES
+  Blink on updates
   Default Sametime smileys
   Custom Smileys
 
-ChatClient:
+UPDATES
 v0.1 @ 2013-05-06
   Basic chat client, can send and receive with a GUI consisting of two5A windows
 v0.1.1 @ 2013-05-08
