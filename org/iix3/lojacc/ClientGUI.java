@@ -1,6 +1,8 @@
 /* lojacc ClientGUI
  * GUI Handling for Chat Applet
  * Requires ClientSocket from the same package
+ * 
+ * Icons from Entypo: http://www.entypo.com/
  */
 //http://java-sl.com/tip_autoreplace_smiles.html
 
@@ -14,14 +16,17 @@ import java.nio.charset.Charset;
 import java.awt.Font;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import javax.swing.JApplet;
+import javax.swing.JButton;
+import javax.swing.JEditorPane;
+import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JEditorPane;
 import javax.swing.JTextArea;
 
 import javax.swing.border.EtchedBorder;
@@ -39,44 +44,45 @@ import org.iix3.lojacc.ClientSocket;
 
 public class ClientGUI extends JApplet implements KeyListener {
 
-  String _info = "lojacc v0.1.1b by Olle K";
+  String _info = "lojacc v0.1.2 (2013-05-14) by Olle K";
 
-  SimpleDateFormat dateFormat;
-  JTextArea inputLine;
-  JEditorPane chatWindow;
-  Document cwText;
-  HTMLDocument cwTextHTML;
   JPanel mainGUI;
+  JTextArea wArea;
+  HTMLDocument rAreaDoc;
+
+  SimpleDateFormat dateFormat = new SimpleDateFormat("HH.mm");
+  int currFontSize = 11;
+  String currFontName = "Calibri";
   ClientSocket sock;
 
   public ClientGUI() {
-
+    
+    /* MainGUI */
     mainGUI = new JPanel(new BorderLayout(20,20));
+    //mainGUI.setBackground(Color.gray);
     mainGUI.setBorder(new EtchedBorder(Color.white, Color.gray));
     
-    // Writeable field
-    inputLine = new JTextArea(2, 0);
-    inputLine.setLineWrap(true);
-    inputLine.addKeyListener(this);
-    mainGUI.add(new JScrollPane(inputLine), BorderLayout.SOUTH);
-
-    // Chat Window
-    chatWindow = new JEditorPane();
-    chatWindow.setContentType("text/HTML");
-    chatWindow.setEditorKit(new HTMLEditorKit());
-    cwText = chatWindow.getDocument();
-    cwTextHTML = (HTMLDocument)cwText;
-    Font c11 = new Font("Calibri", Font.PLAIN, 11);
-    String cwCSS = "body { font-family: "+c11.getFamily()+"; font-size: "+c11.getSize()+"pt;}";
-    cwTextHTML.getStyleSheet().addRule(cwCSS);
-    DefaultCaret caret = (DefaultCaret)chatWindow.getCaret();
-    caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
-    chatWindow.setEditable(false);
-    mainGUI.add(new JScrollPane(chatWindow), BorderLayout.CENTER);
-
-    // Config
-    dateFormat = new SimpleDateFormat("HH.mm");
+    /* Chat Window = rArea */
+    JEditorPane rArea = new JEditorPane();
+    rArea.setEditable(false);
+    rArea.setContentType("text/HTML");
+    rArea.setEditorKit(new HTMLEditorKit());
+    rAreaDoc = (HTMLDocument)rArea.getDocument();
+    // -- this:
+    DefaultCaret rAreaDocCaret = (DefaultCaret)rArea.getCaret();
+    rAreaDocCaret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+    // ---
+    mainGUI.add(new JScrollPane(rArea), BorderLayout.CENTER);
     
+    /* Writeable field = wArea */
+    wArea = new JTextArea(2, 0);
+    wArea.setLineWrap(true);
+    wArea.addKeyListener(this);
+    mainGUI.add(new JScrollPane(wArea), BorderLayout.SOUTH);
+
+    updateCSS();
+
+    /* Last bit */
     setContentPane(mainGUI);
     validate();
 
@@ -87,14 +93,17 @@ public class ClientGUI extends JApplet implements KeyListener {
   public void keyPressed(KeyEvent event) {
     if (event.getKeyCode() == KeyEvent.VK_ENTER) {
 
-      String msgString = inputLine.getText();
+      String msgString = wArea.getText();
       if (msgString.length() < 1) return;
-      inputLine.setText(null);
+      wArea.setText(null);
       if (msgString.substring(0, 1).equals("/")) {
+        String[] msgList = msgString.split(" ");
 
-        if (msgString.equals("/connect")) {
-          if (sock != null) chatPrint("/disconnect your current socket first!");
-          else sock = new ClientSocket(this);
+        if (msgString.equals("/help")) {
+          chatPrint("# Available commands:");
+          chatPrint("/fsize <number> - set font size");
+          chatPrint("/disconnect - Disconnect from chatserver");
+          chatPrint("/reconnect - Reconnect to chatserver");
         }
 
         else if (msgString.equals("/disconnect")) {
@@ -109,6 +118,14 @@ public class ClientGUI extends JApplet implements KeyListener {
           if (sock != null) sock.kill();
           sock = new ClientSocket(this);
         }
+
+        else if (msgList[0].equals("/fsize")) {
+          try {
+          currFontSize = Integer.parseInt(msgList[1]);
+          updateCSS();
+          } catch(NumberFormatException e) {}
+          catch (ArrayIndexOutOfBoundsException er) {}
+        }
       }
       else if (sock != null) sock.send(msgString);
       else chatPrint(msgString);
@@ -117,12 +134,12 @@ public class ClientGUI extends JApplet implements KeyListener {
 
   public void keyReleased(KeyEvent event) {
     if (event.getKeyCode() == KeyEvent.VK_ENTER)
-      inputLine.setText(null);
+      wArea.setText(null);
   }
 
   public void chatPrint(String msgString) {
     
-    //Reencode the string to UTF-8 in case it's ISO-8859-1 or something
+    // Reencoding the string to UTF-8 in case it's ISO-8859-1 or something
     try {
       msgString = new String(msgString.getBytes(Charset.defaultCharset()), "UTF-8"); 
     } catch (UnsupportedEncodingException ueeError) {
@@ -135,21 +152,27 @@ public class ClientGUI extends JApplet implements KeyListener {
     msgString = msgString.replace(">", "&gt;");
 
     try {
-      Element len = cwTextHTML.getParagraphElement(cwTextHTML.getLength());
+      Element len = rAreaDoc.getParagraphElement(rAreaDoc.getLength());
       if (msgString.substring(0, 5).equals("&lt;~"))
-        cwTextHTML.insertBeforeEnd(len, timestamp() + "<b> " + msgString + "\n</b><br>");
+        rAreaDoc.insertBeforeEnd(len, timestamp() + "<b> " + msgString + "\n</b><br>");
       else
-        cwTextHTML.insertBeforeEnd(len, timestamp() + " " + msgString + "\n<br>");
+        rAreaDoc.insertBeforeEnd(len, timestamp() + " " + msgString + "\n<br>");
     } catch(BadLocationException blError) {
     } catch(IOException ioError) {
     }
   }
 
   
+  private void updateCSS() {
+    Font currFont = new Font(currFontName, Font.PLAIN, currFontSize);
+    String CSS = "body { font-family: "+currFont.getFamily()+
+      "; font-size: "+currFont.getSize()+"pt;}";
+    rAreaDoc.getStyleSheet().addRule(CSS);
+  }
 
   private String timestamp() {
     return "[" + dateFormat.format(new Date()) + "]";
   }
-  
-  public void keyTyped(KeyEvent event) { return; }
+
+  public void keyTyped(KeyEvent event) {}
 }

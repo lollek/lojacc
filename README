@@ -25,3 +25,7 @@ v0.1.1 @ 2013-05-08
   Changed top window, which now displays HTML (for now BOLD works)
 v0.1.1b @ 2013-05-14
   Fixed bug that made machines not using UTF-8 to mess up the encoding
+v0.1.2 @ 2013-05-14
+  Can now change font size through /fsize <number>
+  Can now ask for howto using /help
+  Removed /connect since that should be kind of hardcoded
