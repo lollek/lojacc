@@ -1,42 +1,26 @@
 /* lojacc ClientGUI
  * GUI Handling for Chat Applet
  * Requires ClientSocket from the same package
- * 
- * Icons from Entypo: http://www.entypo.com/
  */
 //http://java-sl.com/tip_autoreplace_smiles.html
 
 package org.iix3.lojacc;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
-import java.nio.charset.Charset;
-
-import java.awt.Font;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-
-import javax.swing.JApplet;
-import javax.swing.JButton;
-import javax.swing.JEditorPane;
-import javax.swing.ImageIcon;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
 
 import javax.swing.border.EtchedBorder;
 import javax.swing.text.DefaultCaret;
-import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLDocument;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -44,7 +28,7 @@ import org.iix3.lojacc.ClientSocket;
 
 public class ClientGUI extends JApplet implements KeyListener {
 
-  String _info = "lojacc v0.1.2 (2013-05-14) by Olle K";
+  String _info = "lojacc v0.2 (2013-05-15) by Olle K";
 
   JPanel mainGUI;
   JTextArea wArea;
@@ -57,35 +41,75 @@ public class ClientGUI extends JApplet implements KeyListener {
 
   public ClientGUI() {
     
-    /* MainGUI */
-    mainGUI = new JPanel(new BorderLayout(20,20));
-    //mainGUI.setBackground(Color.gray);
+    /* GUI Window = MainGUI */
+    mainGUI = new JPanel(new GridBagLayout());
     mainGUI.setBorder(new EtchedBorder(Color.white, Color.gray));
     
+    /* Writeable field = wArea */
+    wArea = new JTextArea(2, 0);
+    wArea.setLineWrap(true);
+    wArea.addKeyListener(this);
+    GridBagConstraints wAreaCon = new GridBagConstraints();
+    wAreaCon.ipady = 25;
+    wAreaCon.weightx = 1;
+    wAreaCon.weighty = 1;
+    wAreaCon.gridwidth = 2;
+    wAreaCon.gridx = 0;
+    wAreaCon.gridy = 2;
+    wAreaCon.fill = GridBagConstraints.HORIZONTAL;
+    wAreaCon.anchor = GridBagConstraints.SOUTH;
+    mainGUI.add(new JScrollPane(wArea), wAreaCon);
+
+    /* Text Size Button */
+    JButton tSizeButton = new JButton("Text Size");
+    GridBagConstraints bCon = new GridBagConstraints();
+    bCon.fill = GridBagConstraints.HORIZONTAL;
+    bCon.gridx = 0;
+    bCon.gridy = 1;
+    final JPopupMenu tSizePopup = new JPopupMenu();
+    for (int i = 10; i <= 20; i++)
+      tSizePopup.add(returnSizePop(i));
+    tSizeButton.addMouseListener(new MouseAdapter() {
+        public void mousePressed(MouseEvent e) {
+          tSizePopup.show(e.getComponent(), e.getX(), e.getY());
+        }
+      });
+    mainGUI.add(tSizeButton, bCon);
+
+    /* Aux Button*/
+    JButton button = new JButton("Color");
+    bCon.gridx = 1;
+    bCon.insets = new Insets(0, 0, 0, 850);
+    mainGUI.add(button, bCon);
+
     /* Chat Window = rArea */
     JEditorPane rArea = new JEditorPane();
     rArea.setEditable(false);
     rArea.setContentType("text/HTML");
     rArea.setEditorKit(new HTMLEditorKit());
     rAreaDoc = (HTMLDocument)rArea.getDocument();
-    // -- this:
+    // -- this should be changed:
     DefaultCaret rAreaDocCaret = (DefaultCaret)rArea.getCaret();
     rAreaDocCaret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
     // ---
-    mainGUI.add(new JScrollPane(rArea), BorderLayout.CENTER);
-    
-    /* Writeable field = wArea */
-    wArea = new JTextArea(2, 0);
-    wArea.setLineWrap(true);
-    wArea.addKeyListener(this);
-    mainGUI.add(new JScrollPane(wArea), BorderLayout.SOUTH);
+    GridBagConstraints rAreaCon = new GridBagConstraints();
+    rAreaCon.ipady = 400;
+    //rAreaCon.weightx = 1;
+    //rAreaCon.weighty = 1;
+    rAreaCon.gridwidth = 2;
+    rAreaCon.gridx = 0;
+    rAreaCon.gridy = 0;
+    rAreaCon.fill = GridBagConstraints.BOTH;
+    rAreaCon.anchor = GridBagConstraints.NORTH;
+    mainGUI.add(new JScrollPane(rArea), rAreaCon);
 
-    updateCSS();
 
     /* Last bit */
     setContentPane(mainGUI);
     validate();
 
+    
+    updateCSS();
     chatPrint(_info);
     sock = new ClientSocket(this);
   }
@@ -159,9 +183,20 @@ public class ClientGUI extends JApplet implements KeyListener {
         rAreaDoc.insertBeforeEnd(len, timestamp() + " " + msgString + "\n<br>");
     } catch(BadLocationException blError) {
     } catch(IOException ioError) {
+    } catch(StringIndexOutOfBoundsException e) {
     }
   }
 
+  
+  private JMenuItem returnSizePop(final int tSize) {
+    final JMenuItem retPop = new JMenuItem(new AbstractAction(Integer.toString(tSize)) {
+        public void actionPerformed(ActionEvent e) {
+          currFontSize = tSize;
+          updateCSS();
+        }
+      });
+    return retPop;
+  }
   
   private void updateCSS() {
     Font currFont = new Font(currFontName, Font.PLAIN, currFontSize);

@@ -29,3 +29,6 @@ v0.1.2 @ 2013-05-14
   Can now change font size through /fsize <number>
   Can now ask for howto using /help
   Removed /connect since that should be kind of hardcoded
+v0.2 @ 2013-05-15
+  Changed layout to make room for buttons
+  Added button where you can change text size
