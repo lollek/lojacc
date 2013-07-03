@@ -15,7 +15,6 @@ BUGS:
 
 PLANNED FEATURES
   Blink on updates
-  Default Sametime smileys
   Custom Smileys
 
 UPDATES
@@ -32,3 +31,13 @@ v0.1.2 @ 2013-05-14
 v0.2 @ 2013-05-15
   Changed layout to make room for buttons
   Added button where you can change text size
+v0.2.1 @ 2013-07-03
+  Changed standard fontsize to 13 for non-linux (I hope?)
+  Changed some commands:
+    REMOVED: /fsize <number> - set font size
+    ADDED: //r = /reconnect
+    ADDED: //d = /disconnect
+  Typing stuff when disconnected gives error message
+  Changed smileys:
+    ADDED: :/ :) :( :@ :P :D ;) :lol:
+  Removed some debuginfo, errors generally causes disconnection instead

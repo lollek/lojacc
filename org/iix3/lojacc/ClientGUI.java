@@ -28,28 +28,28 @@ import org.iix3.lojacc.ClientSocket;
 
 public class ClientGUI extends JApplet implements KeyListener {
 
-  String _info = "lojacc v0.2 (2013-05-15) by Olle K";
+  final JTextArea wArea;
+  final HTMLDocument rAreaDoc;
+  final SimpleDateFormat dateFormat = new SimpleDateFormat("HH.mm");
 
-  JPanel mainGUI;
-  JTextArea wArea;
-  HTMLDocument rAreaDoc;
-
-  SimpleDateFormat dateFormat = new SimpleDateFormat("HH.mm");
   int currFontSize = 11;
   String currFontName = "Calibri";
   ClientSocket sock;
 
   public ClientGUI() {
     
+    /* Init: */
+    final String welcome_info = "lojacc v0.2.1 (2013-07-03) by Olle K";
+  
     /* GUI Window = MainGUI */
-    mainGUI = new JPanel(new GridBagLayout());
+    final JPanel mainGUI = new JPanel(new GridBagLayout());
     mainGUI.setBorder(new EtchedBorder(Color.white, Color.gray));
     
     /* Writeable field = wArea */
     wArea = new JTextArea(2, 0);
     wArea.setLineWrap(true);
     wArea.addKeyListener(this);
-    GridBagConstraints wAreaCon = new GridBagConstraints();
+    final GridBagConstraints wAreaCon = new GridBagConstraints();
     wAreaCon.ipady = 25;
     wAreaCon.weightx = 1;
     wAreaCon.weighty = 1;
@@ -61,8 +61,8 @@ public class ClientGUI extends JApplet implements KeyListener {
     mainGUI.add(new JScrollPane(wArea), wAreaCon);
 
     /* Text Size Button */
-    JButton tSizeButton = new JButton("Text Size");
-    GridBagConstraints bCon = new GridBagConstraints();
+    final JButton tSizeButton = new JButton("Text Size");
+    final GridBagConstraints bCon = new GridBagConstraints();
     bCon.fill = GridBagConstraints.HORIZONTAL;
     bCon.gridx = 0;
     bCon.gridy = 1;
@@ -77,25 +77,23 @@ public class ClientGUI extends JApplet implements KeyListener {
     mainGUI.add(tSizeButton, bCon);
 
     /* Aux Button*/
-    JButton button = new JButton("Color");
+    final JButton button = new JButton("Color");
     bCon.gridx = 1;
     bCon.insets = new Insets(0, 0, 0, 850);
     mainGUI.add(button, bCon);
 
     /* Chat Window = rArea */
-    JEditorPane rArea = new JEditorPane();
+    final JEditorPane rArea = new JEditorPane();
     rArea.setEditable(false);
     rArea.setContentType("text/HTML");
     rArea.setEditorKit(new HTMLEditorKit());
     rAreaDoc = (HTMLDocument)rArea.getDocument();
-    // -- this should be changed:
-    DefaultCaret rAreaDocCaret = (DefaultCaret)rArea.getCaret();
+    // -- this should be changed?:
+    final DefaultCaret rAreaDocCaret = (DefaultCaret)rArea.getCaret();
     rAreaDocCaret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
     // ---
-    GridBagConstraints rAreaCon = new GridBagConstraints();
+    final GridBagConstraints rAreaCon = new GridBagConstraints();
     rAreaCon.ipady = 400;
-    //rAreaCon.weightx = 1;
-    //rAreaCon.weighty = 1;
     rAreaCon.gridwidth = 2;
     rAreaCon.gridx = 0;
     rAreaCon.gridy = 0;
@@ -103,56 +101,63 @@ public class ClientGUI extends JApplet implements KeyListener {
     rAreaCon.anchor = GridBagConstraints.NORTH;
     mainGUI.add(new JScrollPane(rArea), rAreaCon);
 
+    /* Fontsize 13 is better for Win.. Maybe MAC too? */
+    if (System.getProperty("os.name").length() != 5)
+      currFontSize = 13;
 
     /* Last bit */
     setContentPane(mainGUI);
     validate();
-
-    
     updateCSS();
-    chatPrint(_info);
+    chatPrint(welcome_info);
     sock = new ClientSocket(this);
   }
 
   public void keyPressed(KeyEvent event) {
     if (event.getKeyCode() == KeyEvent.VK_ENTER) {
 
+      /* Fetch Text from wArea and clear it: */
       String msgString = wArea.getText();
-      if (msgString.length() < 1) return;
+      if (msgString.length() < 1) 
+        return;
       wArea.setText(null);
-      if (msgString.substring(0, 1).equals("/")) {
-        String[] msgList = msgString.split(" ");
 
+      /* Text beginning with / is treated as a client command: */
+      if (msgString.substring(0, 1).equals("/")) {
+
+        /* /help */
         if (msgString.equals("/help")) {
           chatPrint("# Available commands:");
-          chatPrint("/fsize <number> - set font size");
-          chatPrint("/disconnect - Disconnect from chatserver");
-          chatPrint("/reconnect - Reconnect to chatserver");
+          chatPrint("/disconnect | //d - Disconnect from chatserver");
+          chatPrint("/reconnect  | //r - Reconnect to chatserver");
         }
 
-        else if (msgString.equals("/disconnect")) {
-          if (sock == null) chatPrint("You are not connected");
-          else {
+        /* /disconnect || //d */
+        else if (msgString.equals("/disconnect")||
+                 msgString.equals("//d")) {
+          if (sock == null)  
+            chatPrint("You are not connected");
+          else 
             sock.kill();
-            sock = null;
-          }
         }
-
-        else if (msgString.equals("/reconnect")) {
-          if (sock != null) sock.kill();
+        
+        /* /reconnect || //r */
+        else if (msgString.equals("/reconnect")||
+                 msgString.equals("//r")) {
+          if (sock != null) 
+            sock.kill();
           sock = new ClientSocket(this);
         }
 
-        else if (msgList[0].equals("/fsize")) {
-          try {
-          currFontSize = Integer.parseInt(msgList[1]);
-          updateCSS();
-          } catch(NumberFormatException e) {}
-          catch (ArrayIndexOutOfBoundsException er) {}
-        }
       }
-      else if (sock != null) sock.send(msgString);
-      else chatPrint(msgString);
+      
+      /* Otherwise, treat it as a message and send: */
+      else if (sock != null) 
+        sock.send(msgString);
+      
+      /* If there's no socket; print warning: */
+      else 
+        chatPrint("You are not connected! Try typing /reconnect");
     }
   }
 
@@ -163,28 +168,48 @@ public class ClientGUI extends JApplet implements KeyListener {
 
   public void chatPrint(String msgString) {
     
-    // Reencoding the string to UTF-8 in case it's ISO-8859-1 or something
+    /* Reencoding the string to UTF-8 in case it's ISO-8859-1 or something */
     try {
       msgString = new String(msgString.getBytes(Charset.defaultCharset()), "UTF-8"); 
     } catch (UnsupportedEncodingException ueeError) {
       msgString = "Error encoding string"; 
     }
 
-    // Escape some HTML:
+    /* Escape some HTML: */
     msgString = msgString.replace("&", "&amp;");
     msgString = msgString.replace("<", "&lt;");
     msgString = msgString.replace(">", "&gt;");
 
+
+    /* SMILEYS! */
+    msgString = msgString.replace(":/", 
+                "<img src=\"http://iix3.org/chat/.img/down.gif\" alt=\":/\">");
+    msgString = msgString.replace(":)", 
+                "<img src=\"http://iix3.org/chat/.img/happy.gif\" alt=\":)\">");
+    msgString = msgString.replace(":(", 
+                "<img src=\"http://iix3.org/chat/.img/sad.gif\" alt=\":(\">");
+    msgString = msgString.replace(":@", 
+                "<img src=\"http://iix3.org/chat/.img/angry.gif\" alt=\":@\">");
+    msgString = msgString.replace(":P", 
+                "<img src=\"http://iix3.org/chat/.img/tongue.gif\" alt=\":P\">");
+    msgString = msgString.replace(":D", 
+                "<img src=\"http://iix3.org/chat/.img/bigsmile.gif\" alt=\":D\">");
+    msgString = msgString.replace(";)", 
+                "<img src=\"http://iix3.org/chat/.img/wink.gif\" alt=\";)\">");
+    msgString = msgString.replace(":lol:",
+                "<img src=\"http://iix3.org/chat/.img/laugh.gif\" alt=\":lol:\">");
+
+    /* Write the text (in bold if it begins with <~): */
     try {
       Element len = rAreaDoc.getParagraphElement(rAreaDoc.getLength());
       if (msgString.substring(0, 5).equals("&lt;~"))
         rAreaDoc.insertBeforeEnd(len, timestamp() + "<b> " + msgString + "\n</b><br>");
       else
         rAreaDoc.insertBeforeEnd(len, timestamp() + " " + msgString + "\n<br>");
-    } catch(BadLocationException blError) {
-    } catch(IOException ioError) {
-    } catch(StringIndexOutOfBoundsException e) {
-    }
+    } 
+    catch(BadLocationException blError) {} 
+    catch(IOException ioError) {} 
+    catch(StringIndexOutOfBoundsException e) {}
   }
 
   

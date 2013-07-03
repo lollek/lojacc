@@ -19,23 +19,20 @@ import org.iix3.lojacc.ClientGUI;
 
 public class ClientSocket extends Thread {
 
-  ClientGUI master;
+  final ClientGUI master;
   Socket socket;
 
-  String hostname = "iix3.org";
-  int port = 7777;
   boolean runThread = false;
 
   BufferedReader inBuff;
   BufferedOutputStream outBuff;
 
-  public ClientSocket(ClientGUI _master) {
+  public ClientSocket(ClientGUI _master, String hostname, int port) {
 
     master = _master;
+    master.chatPrint("Connecting to " + hostname);
 
     try {
-      master.chatPrint("Connecting to " + hostname);
-
       socket = new Socket(hostname, port);
       inBuff = new BufferedReader(new InputStreamReader(socket.getInputStream()));
       outBuff = new BufferedOutputStream(socket.getOutputStream());
@@ -52,20 +49,23 @@ public class ClientSocket extends Thread {
     if (runThread)
       this.start();
   }
+  public ClientSocket(ClientGUI _master) {
+    this(_master, "iix3.org", 7777);
+  }
 
   public void run() {
 
     String recvmsg = null;
-    do {
-      try {
-        if ((recvmsg = inBuff.readLine()) != null)
-          master.chatPrint(recvmsg);
-      }
-      catch (IOException ioError) {
-        master.chatPrint("Exception raised: " + ioError.getMessage() +
-                         " - Try typing /reconnect if you're experiencing issues");
-      }
-    } while (recvmsg != null && runThread);
+    try {
+      do {
+        if ((recvmsg = inBuff.readLine()) == null)
+          continue;
+        master.chatPrint(recvmsg);
+
+      } while (recvmsg != null && runThread);
+    } catch (IOException e) {
+      kill();
+    }
   }
 
   public void send(String msgString) {
@@ -73,18 +73,22 @@ public class ClientSocket extends Thread {
     try {
       outBuff.write(msgString.getBytes("UTF-8"));
       outBuff.flush();
-    } catch (IOException ioError) {
-      master.chatPrint("Error sending: " + ioError.getMessage() +
+    } catch (IOException e) {
+      master.chatPrint("Error sending: " + e.getMessage() +
                        " - Try typing /reconnect in case you've lost connection");
     }
   }
 
   public void kill() {
+    
+    if (!runThread)
+      return;
+
     try {
       runThread = false;
       socket.close();
-    } catch (IOException ioError) {
-      return;
-    }
+      master.sock = null;
+      master.chatPrint("Disconnected from server - Type /reconnect to reconnect");
+    } catch (IOException ioError) {}
   }
 }
