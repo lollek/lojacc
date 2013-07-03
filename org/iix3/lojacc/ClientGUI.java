@@ -101,7 +101,8 @@ public class ClientGUI extends JApplet implements KeyListener {
     rAreaCon.anchor = GridBagConstraints.NORTH;
     mainGUI.add(new JScrollPane(rArea), rAreaCon);
 
-    /* Fontsize 13 is better for Win.. Maybe MAC too? */
+    /* Fontsize 13 is better for Win.. Maybe MAC too? 
+       System.getProperty("os.name") is not "Linux", so this is a temp hack: */
     if (System.getProperty("os.name").length() != 5)
       currFontSize = 13;
 
@@ -113,6 +114,7 @@ public class ClientGUI extends JApplet implements KeyListener {
     sock = new ClientSocket(this);
   }
 
+  /* GUI Keypress: */
   public void keyPressed(KeyEvent event) {
     if (event.getKeyCode() == KeyEvent.VK_ENTER) {
 
@@ -161,11 +163,14 @@ public class ClientGUI extends JApplet implements KeyListener {
     }
   }
 
+  /* GUI Keyup: */
   public void keyReleased(KeyEvent event) {
+    /* Without this, ENTER creates an ugly newline: */
     if (event.getKeyCode() == KeyEvent.VK_ENTER)
       wArea.setText(null);
   }
 
+  /* This replaces println, i.e. adds strings to GUI: */
   public void chatPrint(String msgString) {
     
     /* Reencoding the string to UTF-8 in case it's ISO-8859-1 or something */
@@ -175,30 +180,48 @@ public class ClientGUI extends JApplet implements KeyListener {
       msgString = "Error encoding string"; 
     }
 
-    /* Escape some HTML: */
-    msgString = msgString.replace("&", "&amp;");
-    msgString = msgString.replace("<", "&lt;");
-    msgString = msgString.replace(">", "&gt;");
+    /* Replace stuff in text: 
+       Not sure if this C-style way of doing it works better than .replace()
+       But since I'm replacing so much, it should be? */
+    StringBuilder sb = new StringBuilder();
+    char [] msgArr = msgString.toCharArray();
+    for (int i = 0; i < msgArr.length; i++) {
+      switch(msgArr[i]) {
 
-
-    /* SMILEYS! */
-    msgString = msgString.replace(":/", 
-                "<img src=\"http://iix3.org/chat/.img/down.gif\" alt=\":/\">");
-    msgString = msgString.replace(":)", 
-                "<img src=\"http://iix3.org/chat/.img/happy.gif\" alt=\":)\">");
-    msgString = msgString.replace(":(", 
-                "<img src=\"http://iix3.org/chat/.img/sad.gif\" alt=\":(\">");
-    msgString = msgString.replace(":@", 
-                "<img src=\"http://iix3.org/chat/.img/angry.gif\" alt=\":@\">");
-    msgString = msgString.replace(":P", 
-                "<img src=\"http://iix3.org/chat/.img/tongue.gif\" alt=\":P\">");
-    msgString = msgString.replace(":D", 
-                "<img src=\"http://iix3.org/chat/.img/bigsmile.gif\" alt=\":D\">");
-    msgString = msgString.replace(";)", 
-                "<img src=\"http://iix3.org/chat/.img/wink.gif\" alt=\";)\">");
-    msgString = msgString.replace(":lol:",
-                "<img src=\"http://iix3.org/chat/.img/laugh.gif\" alt=\":lol:\">");
-
+        /* Escape some HTML: */
+        case '&': sb.append("&amp;"); break;
+        case '<': sb.append("&lt;"); break;
+        case '>': sb.append("&gt;"); break;
+          
+        /* Escape smileys: */
+        case ':':
+          switch(msgArr[i+1]) {
+            case '/': sb.append(emoticonURL("down.gif", ":/")); i++; break; 
+            case ')': sb.append(emoticonURL("happy.gif", ":)")); i++; break;
+            case '(': sb.append(emoticonURL("sad.gif", ":(")); i++; break;
+            case '@': sb.append(emoticonURL("angry.gif", ":@")); i++; break;
+            case 'P': sb.append(emoticonURL("tongue.gif", ":P")); i++; break;
+            case 'D': sb.append(emoticonURL("bigsmile.gif", ":D")); i++; break;
+            case 'l': 
+              if (msgArr[i+2] == 'o' && msgArr[i+3] == 'l' && msgArr[i+4] == ':') {
+                sb.append(emoticonURL("laugh.gif", ":lol:")); i += 4; break;
+              } else {
+                sb.append(msgString.charAt(i)); break;
+              }
+            default: sb.append(msgString.charAt(i)); break;
+          } break;
+          
+        case ';':
+          if (msgArr[i+1] == ')') {
+            sb.append(emoticonURL("laugh.gif", ":lol:")); break;
+          } else {
+            sb.append(msgString.charAt(i)); break;
+          }
+        default: sb.append(msgString.charAt(i)); break;
+      }
+    }
+    msgString = sb.toString();
+    
     /* Write the text (in bold if it begins with <~): */
     try {
       Element len = rAreaDoc.getParagraphElement(rAreaDoc.getLength());
@@ -212,7 +235,7 @@ public class ClientGUI extends JApplet implements KeyListener {
     catch(StringIndexOutOfBoundsException e) {}
   }
 
-  
+  /* GUI Button for changing font size: */
   private JMenuItem returnSizePop(final int tSize) {
     final JMenuItem retPop = new JMenuItem(new AbstractAction(Integer.toString(tSize)) {
         public void actionPerformed(ActionEvent e) {
@@ -223,6 +246,7 @@ public class ClientGUI extends JApplet implements KeyListener {
     return retPop;
   }
   
+  /* This refreshes the GUI CSS/style after changes have been made: */
   private void updateCSS() {
     Font currFont = new Font(currFontName, Font.PLAIN, currFontSize);
     String CSS = "body { font-family: "+currFont.getFamily()+
@@ -230,9 +254,16 @@ public class ClientGUI extends JApplet implements KeyListener {
     rAreaDoc.getStyleSheet().addRule(CSS);
   }
 
-  private String timestamp() {
+  /* This returns a timestamp: */
+  public String timestamp() {
     return "[" + dateFormat.format(new Date()) + "]";
   }
 
+  /* This creates an URL for emoticons: */
+  public static String emoticonURL(String image, String alttext) {
+    return "<img src=\"http://iix3.org/chat/.img/" + image + "\" alt=\"" + alttext + "\">";
+  }
+
+  /* Unused from keylistener: */
   public void keyTyped(KeyEvent event) {}
 }

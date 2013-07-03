@@ -41,3 +41,6 @@ v0.2.1 @ 2013-07-03
   Changed smileys:
     ADDED: :/ :) :( :@ :P :D ;) :lol:
   Removed some debuginfo, errors generally causes disconnection instead
+v0.2.2 @ 2013-07-03
+ Added some comments
+ Modified string escape function, which hopefully works a lot quicker this way
