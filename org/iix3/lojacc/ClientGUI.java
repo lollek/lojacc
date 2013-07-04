@@ -18,9 +18,13 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLDocument;
 
+import java.applet.Applet;
+import java.applet.AudioClip;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.net.URL;
+import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -28,19 +32,20 @@ import org.iix3.lojacc.ClientSocket;
 
 public class ClientGUI extends JApplet implements KeyListener {
 
-  final JTextArea wArea;
-  final HTMLDocument rAreaDoc;
-  final SimpleDateFormat dateFormat = new SimpleDateFormat("HH.mm");
+  final String welcome_info = "lojacc v0.2.4 (2013-07-04) by Olle K";
 
-  int currFontSize = 11;
-  String currFontName = "Calibri";
+  final private JTextArea wArea;
+  final private HTMLDocument rAreaDoc;
+  final private SimpleDateFormat dateFormat = new SimpleDateFormat("HH.mm");
+  private AudioClip audioClick;
+
+  private boolean windowIsInFocus = false;
+  private int currFontSize = 11;
+  private String currFontName = "Calibri";
   ClientSocket sock;
 
   public ClientGUI() {
     
-    /* Init: */
-    final String welcome_info = "lojacc v0.2.3 (2013-07-04) by Olle K";
-  
     /* GUI Window = MainGUI */
     final JPanel mainGUI = new JPanel(new GridBagLayout());
     mainGUI.setBorder(new EtchedBorder(Color.white, Color.gray));
@@ -49,6 +54,14 @@ public class ClientGUI extends JApplet implements KeyListener {
     wArea = new JTextArea(2, 0);
     wArea.setLineWrap(true);
     wArea.addKeyListener(this);
+    wArea.addFocusListener(new FocusListener() {
+        public void focusGained(FocusEvent e) { 
+          windowIsInFocus = true; 
+        }
+        public void focusLost(FocusEvent e) {
+          windowIsInFocus = false;
+        }
+      });
     final GridBagConstraints wAreaCon = new GridBagConstraints();
     wAreaCon.ipady = 25;
     wAreaCon.weightx = 1;
@@ -67,8 +80,15 @@ public class ClientGUI extends JApplet implements KeyListener {
     bCon.gridx = 0;
     bCon.gridy = 1;
     final JPopupMenu tSizePopup = new JPopupMenu();
-    for (int i = 10; i <= 20; i++)
-      tSizePopup.add(returnSizePop(i));
+    for (int i = 10; i <= 20; i++) {
+      final int I = i;
+      tSizePopup.add(new JMenuItem(new AbstractAction(Integer.toString(i)) {
+          public void actionPerformed(ActionEvent e) {
+            currFontSize = I;
+            updateCSS();
+          }
+        }));
+    }
     tSizeButton.addMouseListener(new MouseAdapter() {
         public void mousePressed(MouseEvent e) {
           tSizePopup.show(e.getComponent(), e.getX(), e.getY());
@@ -101,6 +121,19 @@ public class ClientGUI extends JApplet implements KeyListener {
     rAreaCon.anchor = GridBagConstraints.NORTH;
     mainGUI.add(new JScrollPane(rArea), rAreaCon);
 
+    /* Load sound: */
+    try {
+      URL u = new URL("http://iix3.org/chat/.img/click.au");
+      if (u == null)
+        chatPrint("AudioURL is null");
+      else
+        audioClick = Applet.newAudioClip(u);
+    } catch (MalformedURLException e) {
+      chatPrint("Failed to load audio");
+    } catch (NullPointerException e) {
+      chatPrint("Failed to load audio (null pointer)");
+    }
+
     /* Fontsize 13 is better for Win.. Maybe MAC too? 
        System.getProperty("os.name") is not "Linux", so this is a temp hack: */
     if (System.getProperty("os.name").length() != 5)
@@ -129,6 +162,7 @@ public class ClientGUI extends JApplet implements KeyListener {
 
         /* /help */
         if (msgString.equals("/help")) {
+          chatPrint(welcome_info);
           chatPrint("# Available commands:");
           chatPrint("/disconnect | //d - Disconnect from chatserver");
           chatPrint("/reconnect  | //r - Reconnect to chatserver");
@@ -186,41 +220,48 @@ public class ClientGUI extends JApplet implements KeyListener {
     StringBuilder sb = new StringBuilder();
     char [] msgArr = msgString.toCharArray();
     for (int i = 0; i < msgArr.length; i++) {
-      switch(msgArr[i]) {
+      
+      /* Escape some HTML: */
+      if (msgArr[i] == '&') sb.append("&amp;");
+      else if (msgArr[i] == '<') sb.append("&lt;");
+      else if (msgArr[i] == '>') sb.append("&gt;");
 
-        /* Escape some HTML: */
-        case '&': sb.append("&amp;"); break;
-        case '<': sb.append("&lt;"); break;
-        case '>': sb.append("&gt;"); break;
-          
-        /* Escape smileys: */
-        case ':':
-          if (msgArr.length - i == 1) {
-            sb.append(msgString.charAt(i)); 
-            break;
-          }
-          
-          switch(msgArr[i+1]) {
-            case '/': sb.append(emoticonURL("down.gif", ":/")); i++; break; 
-            case ')': sb.append(emoticonURL("happy.gif", ":)")); i++; break;
-            case '(': sb.append(emoticonURL("sad.gif", ":(")); i++; break;
-            case '@': sb.append(emoticonURL("angry.gif", ":@")); i++; break;
-            case 'P': sb.append(emoticonURL("tongue.gif", ":P")); i++; break;
-            case 'D': sb.append(emoticonURL("bigsmile.gif", ":D")); i++; break;
-            case 'l': sb.append(emoticonURL("laugh.gif", ":lol:")); i += 4; break;
-            default: sb.append(msgString.charAt(i)); break;
-          } break;
-          
-        case ';':
-          if (msgArr.length - i > 1 && msgArr[i+1] == ')') {
-            sb.append(emoticonURL("wink.gif", ";)")); i++; 
-            break;
-          } else {
-            sb.append(msgString.charAt(i)); 
-            break;
-          }
-        default: sb.append(msgString.charAt(i)); break;
+      /* Escape some smileys: */
+      /* : */
+      else if (msgArr[i] == ':' && msgArr.length - i > 1) {
+        if (msgArr[i+1] == '/' && (msgArr.length - i == 2 || 
+                                   msgArr.length - i > 2 && msgArr[i+2] != '/')) { 
+          sb.append(emoticonURL("down.gif", ":/")); i++; }
+        else if (msgArr[i+1] == ')') { sb.append(emoticonURL("happy.gif", ":)")); i++; }
+        else if (msgArr[i+1] == '(') { sb.append(emoticonURL("sad.gif", ":(")); i++; }
+        else if (msgArr[i+1] == '@') { sb.append(emoticonURL("angry.gif", ":@")); i++; }
+        else if (msgArr[i+1] == 'P') { sb.append(emoticonURL("tongue.gif", ":P")); i++; }
+        else if (msgArr[i+1] == 'D') { sb.append(emoticonURL("bigsmile.gif", ":D")); i++; }
+        else if (msgArr[i+1] == '\'' && msgArr.length - i > 2 && msgArr[i+2] == '(') {
+          sb.append(emoticonURL("crying.gif", ":'(")); i += 2;
+        } else sb.append(msgString.charAt(i));
       }
+
+      /* ( )*/
+      else if (msgArr[i] == '(' && msgArr.length - i > 2 && msgArr[i+2] == ')') {
+        if (msgArr[i+1] == 'n' || msgArr[i+1] == 'N') {
+          sb.append(emoticonURL("disagree.gif", "(n)")); i += 2; }
+        else if (msgArr[i+1] == 'y' || msgArr[i+1] == 'Y') {
+          sb.append(emoticonURL("agree.gif", "(y)")); i += 2; }
+      }
+      
+      /* ; */
+      else if (msgArr[i] == ';' && msgArr.length - i > 1 && msgArr[i+1] == ')') {
+        sb.append(emoticonURL("wink.gif", ";)")); i++; 
+      }
+      
+      /* Special A-Za-z */
+      else if (msgArr[i] == 'L' && msgArr.length - i > 2 &&
+               msgArr[i+1] == 'O' && msgArr[i+2] == 'L') {
+        sb.append(emoticonURL("laugh.gif", "LOL")); i += 2;
+      }
+      
+      else sb.append(msgString.charAt(i));
     }
     msgString = sb.toString();
     
@@ -235,19 +276,12 @@ public class ClientGUI extends JApplet implements KeyListener {
     catch(BadLocationException blError) {} 
     catch(IOException ioError) {} 
     catch(StringIndexOutOfBoundsException e) {}
+
+    /* If window is not in focus; play a click: */
+    if (!windowIsInFocus && audioClick != null)
+      audioClick.play();
   }
 
-  /* GUI Button for changing font size: */
-  private JMenuItem returnSizePop(final int tSize) {
-    final JMenuItem retPop = new JMenuItem(new AbstractAction(Integer.toString(tSize)) {
-        public void actionPerformed(ActionEvent e) {
-          currFontSize = tSize;
-          updateCSS();
-        }
-      });
-    return retPop;
-  }
-  
   /* This refreshes the GUI CSS/style after changes have been made: */
   private void updateCSS() {
     Font currFont = new Font(currFontName, Font.PLAIN, currFontSize);

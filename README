@@ -3,19 +3,28 @@ lojacc
 lojacc is the client part of my project on creating a chatserver + client.
 As a former IBM employee I really liked how pictures, smileys and "snapshots" worked in Sametime. As I'm also a bit of an IRC-fan, I would like to combine them a bit.
 
-GOALS:
-  Work on firefox/chrome/ie for linux/win7 with as little deviation as possible
-  Some font attributes (bold text, at least 6 colors)
-  Themeability
-    Set custom font through GUI
-    Set custom font color through GUI
+TO UPDATE:
+  On received messages:
+    Window header should update
 
-BUGS:
-  Scroll (Win7 Chrome/Firefox/IE10)
+  Smileys:
+    Add a button for smileys
+    Make it possible to drag-drop images to the chat window
 
-PLANNED FEATURES
-  Blink on updates
-  Custom Smileys
+  Scroll:
+    It's possible to mess upp the scroll bar it seems..
+    Maybe make it autoscroll to the bottom when there are new messages
+
+  Spellcheck:
+    If possible, add a swedish spellcheck
+
+  Colors:
+    Make own font color always be set to something, e.g. blue
+    Make everyone in the chat automatically use 1 of maybe 6 colors.  
+
+  General:
+    Add copy-paste to right click?
+    Not possible to copy-paste to/from chat
 
 UPDATES
 v0.1 @ 2013-05-06
@@ -46,3 +55,13 @@ v0.2.2 @ 2013-07-03
  Modified string escape function, which hopefully works a lot quicker this way
 v0.2.3 @ 2013-07-04
  Fixed out-of-bounds crash during the string escape function (¬.¬)
+v0.2.4 @ 2013-07-04
+ Changed string escape function again to make it look cleaner
+ Removed unneeded function
+ Changed smileys:
+   Added: (y), (n) :'(
+   Changed: 
+     :l to LOL
+     :// is not longer treated as :/ smiley (to not break e.g. http://)
+ Added sound that plays when there are new messages
+ 
