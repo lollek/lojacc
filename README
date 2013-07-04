@@ -44,3 +44,5 @@ v0.2.1 @ 2013-07-03
 v0.2.2 @ 2013-07-03
  Added some comments
  Modified string escape function, which hopefully works a lot quicker this way
+v0.2.3 @ 2013-07-04
+ Fixed out-of-bounds crash during the string escape function (¬.¬)

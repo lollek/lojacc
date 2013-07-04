@@ -39,7 +39,7 @@ public class ClientGUI extends JApplet implements KeyListener {
   public ClientGUI() {
     
     /* Init: */
-    final String welcome_info = "lojacc v0.2.1 (2013-07-03) by Olle K";
+    final String welcome_info = "lojacc v0.2.3 (2013-07-04) by Olle K";
   
     /* GUI Window = MainGUI */
     final JPanel mainGUI = new JPanel(new GridBagLayout());
@@ -195,6 +195,11 @@ public class ClientGUI extends JApplet implements KeyListener {
           
         /* Escape smileys: */
         case ':':
+          if (msgArr.length - i == 1) {
+            sb.append(msgString.charAt(i)); 
+            break;
+          }
+          
           switch(msgArr[i+1]) {
             case '/': sb.append(emoticonURL("down.gif", ":/")); i++; break; 
             case ')': sb.append(emoticonURL("happy.gif", ":)")); i++; break;
@@ -202,20 +207,17 @@ public class ClientGUI extends JApplet implements KeyListener {
             case '@': sb.append(emoticonURL("angry.gif", ":@")); i++; break;
             case 'P': sb.append(emoticonURL("tongue.gif", ":P")); i++; break;
             case 'D': sb.append(emoticonURL("bigsmile.gif", ":D")); i++; break;
-            case 'l': 
-              if (msgArr[i+2] == 'o' && msgArr[i+3] == 'l' && msgArr[i+4] == ':') {
-                sb.append(emoticonURL("laugh.gif", ":lol:")); i += 4; break;
-              } else {
-                sb.append(msgString.charAt(i)); break;
-              }
+            case 'l': sb.append(emoticonURL("laugh.gif", ":lol:")); i += 4; break;
             default: sb.append(msgString.charAt(i)); break;
           } break;
           
         case ';':
-          if (msgArr[i+1] == ')') {
-            sb.append(emoticonURL("laugh.gif", ":lol:")); break;
+          if (msgArr.length - i > 1 && msgArr[i+1] == ')') {
+            sb.append(emoticonURL("wink.gif", ";)")); i++; 
+            break;
           } else {
-            sb.append(msgString.charAt(i)); break;
+            sb.append(msgString.charAt(i)); 
+            break;
           }
         default: sb.append(msgString.charAt(i)); break;
       }
