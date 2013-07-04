@@ -64,4 +64,13 @@ v0.2.4 @ 2013-07-04
      :l to LOL
      :// is not longer treated as :/ smiley (to not break e.g. http://)
  Added sound that plays when there are new messages
+v0.2.5 @ 2013-07-04
+ Browser title bar updates:
+  Changes to *New Message* when there are new messages
+  Changes back to Lollian Chat when you focus the print-area
+ Added index.html, since it's become a part of the applet
+ Also added a lib/java-plugin-1.6.0.23.jar since I need it to compile
+  I've had some issues with IcedTea's plugin.jar, but it now seems like I can run the applet with it?
+  I may remove this after some testing
+
  

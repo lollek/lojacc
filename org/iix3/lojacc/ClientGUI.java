@@ -27,16 +27,19 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import netscape.javascript.JSObject;
+import netscape.javascript.JSException;
 
 import org.iix3.lojacc.ClientSocket;
 
 public class ClientGUI extends JApplet implements KeyListener {
 
-  final String welcome_info = "lojacc v0.2.4 (2013-07-04) by Olle K";
+  final String welcome_info = "lojacc v0.2.5 (2013-07-04) by Olle K";
 
   final private JTextArea wArea;
   final private HTMLDocument rAreaDoc;
   final private SimpleDateFormat dateFormat = new SimpleDateFormat("HH.mm");
+  private JSObject jsWindow;
   private AudioClip audioClick;
 
   private boolean windowIsInFocus = false;
@@ -57,6 +60,8 @@ public class ClientGUI extends JApplet implements KeyListener {
     wArea.addFocusListener(new FocusListener() {
         public void focusGained(FocusEvent e) { 
           windowIsInFocus = true; 
+          if (jsWindow != null)
+            jsWindow.eval("setTitle(\"Lollian Chat\")");
         }
         public void focusLost(FocusEvent e) {
           windowIsInFocus = false;
@@ -129,9 +134,9 @@ public class ClientGUI extends JApplet implements KeyListener {
       else
         audioClick = Applet.newAudioClip(u);
     } catch (MalformedURLException e) {
-      chatPrint("Failed to load audio");
+      chatPrint("ERROR: Failed to load audio");
     } catch (NullPointerException e) {
-      chatPrint("Failed to load audio (null pointer)");
+      chatPrint("ERROR: Failed to load audio (null pointer)");
     }
 
     /* Fontsize 13 is better for Win.. Maybe MAC too? 
@@ -145,6 +150,20 @@ public class ClientGUI extends JApplet implements KeyListener {
     updateCSS();
     chatPrint(welcome_info);
     sock = new ClientSocket(this);
+  }
+
+  /* Load jsWindow so we can do some JS: 
+     It seems that this cannot safely be in the creator..*/
+  public void setupJSObject() {
+    try {
+      // this should be an Applet instead of JApplet?
+      jsWindow = JSObject.getWindow(this);
+      jsWindow.eval("setTitle(\"Lollian Chat\")");
+    } catch (JSException e) {
+      chatPrint("ERROR: Failed to load JS");
+    } catch (NullPointerException e) {
+      chatPrint("ERROR: Failed to load JS (null pointer) <-- this may be an issue with icedtea?");
+    }
   }
 
   /* GUI Keypress: */
@@ -277,9 +296,12 @@ public class ClientGUI extends JApplet implements KeyListener {
     catch(IOException ioError) {} 
     catch(StringIndexOutOfBoundsException e) {}
 
-    /* If window is not in focus; play a click: */
+    /* If window is not in focus; 
+       play a click and update Title: */
     if (!windowIsInFocus && audioClick != null)
       audioClick.play();
+    if (jsWindow != null)
+      jsWindow.eval("setTitle(\"*New Message*\")");
   }
 
   /* This refreshes the GUI CSS/style after changes have been made: */
