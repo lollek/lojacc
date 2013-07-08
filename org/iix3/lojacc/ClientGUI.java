@@ -6,134 +6,110 @@
 
 package org.iix3.lojacc;
 
+public class ClientGUI 
+  extends javax.swing.JApplet 
+  implements java.awt.event.KeyListener {
 
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
+  final String INFO = "lojacc v0.2.7 (2013-07-08) by Olle K";
 
-import javax.swing.border.EtchedBorder;
-import javax.swing.text.DefaultCaret;
-import javax.swing.text.Element;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.HTMLDocument;
-
-import java.applet.Applet;
-import java.applet.AudioClip;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.net.URL;
-import java.net.MalformedURLException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import netscape.javascript.JSObject;
-import netscape.javascript.JSException;
-
-import org.iix3.lojacc.ClientSocket;
-
-public class ClientGUI extends JApplet implements KeyListener {
-
-  final String welcome_info = "lojacc v0.2.6 (2013-07-04) by Olle K";
-
-  final private JTextArea wArea;
-  final private HTMLDocument rAreaDoc;
-  final private SimpleDateFormat dateFormat = new SimpleDateFormat("HH.mm");
-  private JSObject jsWindow;
-  private AudioClip audioClick;
+  private final javax.swing.JEditorPane readArea;
+  private final javax.swing.JTextArea writeArea;
+  private netscape.javascript.JSObject jsWindow;
+  private java.applet.AudioClip audioClick;
 
   private boolean windowIsInFocus = false;
   private int currFontSize = 11;
   private String currFontName = "Calibri";
-  ClientSocket sock;
+  protected org.iix3.lojacc.ClientSocket sock;
 
   public ClientGUI() {
     
+    final java.awt.GridBagConstraints buttonConstraint;
+    final java.awt.GridBagConstraints writeAreaConstraint;
+    final java.awt.GridBagConstraints readAreaConstraint;
+    final java.net.URL audioClickURL;
+    final javax.swing.JButton auxButton;
+    final javax.swing.JButton textSizeButton;
+    final javax.swing.JPanel mainGUI;
+    final javax.swing.JPopupMenu textSizeButtonPopup;
+
     /* GUI Window = MainGUI */
-    final JPanel mainGUI = new JPanel(new GridBagLayout());
-    mainGUI.setBorder(new EtchedBorder(Color.white, Color.gray));
+    mainGUI = new javax.swing.JPanel(new java.awt.GridBagLayout());
+    mainGUI.setBorder(new javax.swing.border.EtchedBorder(java.awt.Color.white, java.awt.Color.gray));
     
-    /* Writeable field = wArea */
-    wArea = new JTextArea(2, 0);
-    wArea.setLineWrap(true);
-    wArea.addKeyListener(this);
-    wArea.addFocusListener(new FocusListener() {
-        public void focusGained(FocusEvent e) { 
+    /* Writeable field = writeArea */
+    writeArea = new javax.swing.JTextArea(2, 0);
+    writeArea.setLineWrap(true);
+    writeArea.addKeyListener(this);
+    writeArea.addFocusListener(new java.awt.event.FocusListener() {
+        public void focusGained(java.awt.event.FocusEvent e) { 
           windowIsInFocus = true; 
           if (jsWindow != null)
             jsWindow.eval("setTitle(\"Lollian Chat\")");
         }
-        public void focusLost(FocusEvent e) {
+        public void focusLost(java.awt.event.FocusEvent e) {
           windowIsInFocus = false;
         }
       });
-    final GridBagConstraints wAreaCon = new GridBagConstraints();
-    wAreaCon.ipady = 25;
-    wAreaCon.weightx = 1;
-    wAreaCon.weighty = 1;
-    wAreaCon.gridwidth = 2;
-    wAreaCon.gridx = 0;
-    wAreaCon.gridy = 2;
-    wAreaCon.fill = GridBagConstraints.HORIZONTAL;
-    wAreaCon.anchor = GridBagConstraints.SOUTH;
-    mainGUI.add(new JScrollPane(wArea), wAreaCon);
+    writeAreaConstraint = new java.awt.GridBagConstraints();
+    writeAreaConstraint.ipady = 25;
+    writeAreaConstraint.weightx = 1;
+    writeAreaConstraint.weighty = 1;
+    writeAreaConstraint.gridwidth = 2;
+    writeAreaConstraint.gridx = 0;
+    writeAreaConstraint.gridy = 2;
+    writeAreaConstraint.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    writeAreaConstraint.anchor = java.awt.GridBagConstraints.SOUTH;
+    mainGUI.add(new javax.swing.JScrollPane(writeArea), writeAreaConstraint);
 
     /* Text Size Button */
-    final JButton tSizeButton = new JButton("Text Size");
-    final GridBagConstraints bCon = new GridBagConstraints();
-    bCon.fill = GridBagConstraints.HORIZONTAL;
-    bCon.gridx = 0;
-    bCon.gridy = 1;
-    final JPopupMenu tSizePopup = new JPopupMenu();
+    textSizeButton = new javax.swing.JButton("Text Size");
+    buttonConstraint = new java.awt.GridBagConstraints();
+    buttonConstraint.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    buttonConstraint.gridx = 0;
+    buttonConstraint.gridy = 1;
+    textSizeButtonPopup = new javax.swing.JPopupMenu();
     for (int i = 10; i <= 20; i++) {
       final int I = i;
-      tSizePopup.add(new JMenuItem(new AbstractAction(Integer.toString(i)) {
-          public void actionPerformed(ActionEvent e) {
+      textSizeButtonPopup.add(new javax.swing.JMenuItem(new javax.swing.AbstractAction(Integer.toString(i)) {
+          public void actionPerformed(java.awt.event.ActionEvent e) {
             currFontSize = I;
             updateCSS();
           }
         }));
     }
-    tSizeButton.addMouseListener(new MouseAdapter() {
-        public void mousePressed(MouseEvent e) {
-          tSizePopup.show(e.getComponent(), e.getX(), e.getY());
+    textSizeButton.addMouseListener(new java.awt.event.MouseAdapter() {
+        public void mousePressed(java.awt.event.MouseEvent e) {
+          textSizeButtonPopup.show(e.getComponent(), e.getX(), e.getY());
         }
       });
-    mainGUI.add(tSizeButton, bCon);
+    mainGUI.add(textSizeButton, buttonConstraint);
 
     /* Aux Button*/
-    final JButton button = new JButton("...");
-    bCon.gridx = 1;
-    bCon.insets = new Insets(0, 0, 0, 850);
-    mainGUI.add(button, bCon);
+    auxButton = new javax.swing.JButton("...");
+    buttonConstraint.gridx = 1;
+    buttonConstraint.insets = new java.awt.Insets(0, 0, 0, 850);
+    mainGUI.add(auxButton, buttonConstraint);
 
-    /* Chat Window = rArea */
-    final JEditorPane rArea = new JEditorPane();
-    rArea.setEditable(false);
-    rArea.setContentType("text/HTML");
-    rArea.setEditorKit(new HTMLEditorKit());
-    rAreaDoc = (HTMLDocument)rArea.getDocument();
-    // -- this should be changed?:
-    final DefaultCaret rAreaDocCaret = (DefaultCaret)rArea.getCaret();
-    rAreaDocCaret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
-    // ---
-    final GridBagConstraints rAreaCon = new GridBagConstraints();
-    rAreaCon.ipady = 400;
-    rAreaCon.gridwidth = 2;
-    rAreaCon.gridx = 0;
-    rAreaCon.gridy = 0;
-    rAreaCon.fill = GridBagConstraints.BOTH;
-    rAreaCon.anchor = GridBagConstraints.NORTH;
-    mainGUI.add(new JScrollPane(rArea), rAreaCon);
+    /* Chat Window = readArea(Pane) */
+    readArea = new javax.swing.JEditorPane();
+    readArea.setEditable(false);
+    readArea.setContentType("text/HTML");
+    readArea.setEditorKit(new javax.swing.text.html.HTMLEditorKit());
+    readAreaConstraint = new java.awt.GridBagConstraints();
+    readAreaConstraint.ipady = 400;
+    readAreaConstraint.gridwidth = 2;
+    readAreaConstraint.gridx = 0;
+    readAreaConstraint.gridy = 0;
+    readAreaConstraint.fill = java.awt.GridBagConstraints.BOTH;
+    readAreaConstraint.anchor = java.awt.GridBagConstraints.NORTH;
+    mainGUI.add(new javax.swing.JScrollPane(readArea), readAreaConstraint);
 
     /* Load sound: */
     try {
-      URL u = new URL("http://iix3.org/chat/.img/click.au");
-      if (u == null)
-        chatPrint("AudioURL is null");
-      else
-        audioClick = Applet.newAudioClip(u);
-    } catch (MalformedURLException e) {
+      audioClickURL = new java.net.URL("http://iix3.org/chat/.img/click.au");
+      audioClick = java.applet.Applet.newAudioClip(audioClickURL);
+    } catch (java.net.MalformedURLException e) {
       chatPrint("ERROR: Failed to load audio");
     } catch (NullPointerException e) {
       chatPrint("ERROR: Failed to load audio (null pointer)");
@@ -148,17 +124,17 @@ public class ClientGUI extends JApplet implements KeyListener {
     setContentPane(mainGUI);
     validate();
     updateCSS();
-    chatPrint(welcome_info);
-    sock = new ClientSocket(this);
+    chatPrint(INFO);
+    sock = new org.iix3.lojacc.ClientSocket(this);
   }
 
   /* Load jsWindow so we can do some JS: 
      It seems that this cannot safely be in the creator..*/
   public void setupJSObject() {
     try {
-      jsWindow = JSObject.getWindow(this);
+      jsWindow = netscape.javascript.JSObject.getWindow(this);
       jsWindow.eval("setTitle(\"Lollian Chat\")");
-    } catch (JSException e) {
+    } catch (netscape.javascript.JSException e) {
       chatPrint("ERROR: Failed to load JS");
     } catch (NullPointerException e) {
       chatPrint("ERROR: Failed to load JS (null pointer) <-- this may be an issue with icedtea?");
@@ -166,21 +142,21 @@ public class ClientGUI extends JApplet implements KeyListener {
   }
 
   /* GUI Keypress: */
-  public void keyPressed(KeyEvent event) {
-    if (event.getKeyCode() == KeyEvent.VK_ENTER) {
+  public void keyPressed(java.awt.event.KeyEvent event) {
+    if (event.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
 
-      /* Fetch Text from wArea and clear it: */
-      String msgString = wArea.getText();
+      /* Fetch Text from writeArea and clear it: */
+      String msgString = writeArea.getText();
       if (msgString.length() < 1) 
         return;
-      wArea.setText(null);
+      writeArea.setText(null);
 
       /* Text beginning with / is treated as a client command: */
       if (msgString.substring(0, 1).equals("/")) {
 
         /* /help */
         if (msgString.equals("/help")) {
-          chatPrint(welcome_info);
+          chatPrint(INFO);
           chatPrint("# Available commands:");
           chatPrint("/disconnect | //d - Disconnect from chatserver");
           chatPrint("/reconnect  | //r - Reconnect to chatserver");
@@ -200,7 +176,7 @@ public class ClientGUI extends JApplet implements KeyListener {
                  msgString.equals("//r")) {
           if (sock != null) 
             sock.kill();
-          sock = new ClientSocket(this);
+          sock = new org.iix3.lojacc.ClientSocket(this);
         }
 
       }
@@ -216,10 +192,10 @@ public class ClientGUI extends JApplet implements KeyListener {
   }
 
   /* GUI Keyup: */
-  public void keyReleased(KeyEvent event) {
+  public void keyReleased(java.awt.event.KeyEvent event) {
     /* Without this, ENTER creates an ugly newline: */
-    if (event.getKeyCode() == KeyEvent.VK_ENTER)
-      wArea.setText(null);
+    if (event.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER)
+      writeArea.setText(null);
   }
 
   /* This replaces println, i.e. adds strings to GUI: */
@@ -227,8 +203,8 @@ public class ClientGUI extends JApplet implements KeyListener {
     
     /* Reencoding the string to UTF-8 in case it's ISO-8859-1 or something */
     try {
-      msgString = new String(msgString.getBytes(Charset.defaultCharset()), "UTF-8"); 
-    } catch (UnsupportedEncodingException ueeError) {
+      msgString = new String(msgString.getBytes(java.nio.charset.Charset.defaultCharset()), "UTF-8"); 
+    } catch (java.io.UnsupportedEncodingException ueeError) {
       msgString = "Error encoding string"; 
     }
 
@@ -298,12 +274,17 @@ public class ClientGUI extends JApplet implements KeyListener {
     msgString = sb.toString();
     
     try {
-      final Element len = rAreaDoc.getParagraphElement(rAreaDoc.getLength());
-      rAreaDoc.insertBeforeEnd(len, msgString);
-      //rAreaDoc.setCaretPosition(rAreaDoc.getDocument().getLength());
+      final javax.swing.text.html.HTMLDocument readAreaDoc;
+      final javax.swing.text.Element len;
+
+      readAreaDoc = (javax.swing.text.html.HTMLDocument)readArea.getDocument();
+      len = readAreaDoc.getParagraphElement(readAreaDoc.getLength());
+
+      readAreaDoc.insertBeforeEnd(len, msgString);
+      readArea.setCaretPosition(readAreaDoc.getLength());
     } 
-    catch(BadLocationException e) {} 
-    catch(IOException e) {} 
+    catch(javax.swing.text.BadLocationException e) {} 
+    catch(java.io.IOException e) {} 
     catch(StringIndexOutOfBoundsException e) {}
 
     /* If window is not in focus; 
@@ -318,15 +299,21 @@ public class ClientGUI extends JApplet implements KeyListener {
 
   /* This refreshes the GUI CSS/style after changes have been made: */
   private void updateCSS() {
-    Font currFont = new Font(currFontName, Font.PLAIN, currFontSize);
-    String CSS = "body { font-family: "+currFont.getFamily()+
-      "; font-size: "+currFont.getSize()+"pt;}";
-    rAreaDoc.getStyleSheet().addRule(CSS);
+    
+    final javax.swing.text.html.HTMLDocument readAreaDoc;
+    final java.awt.Font newFont;
+    final String newCSS;
+
+    readAreaDoc = (javax.swing.text.html.HTMLDocument)readArea.getDocument();
+
+    newFont = new java.awt.Font(currFontName, java.awt.Font.PLAIN, currFontSize);
+    newCSS = "body { font-family:"+newFont.getFamily()+";font-size:"+newFont.getSize()+"pt;}";
+    readAreaDoc.getStyleSheet().addRule(newCSS);
   }
 
   /* This returns a timestamp: */
-  public String timestamp() {
-    return "[" + dateFormat.format(new Date()) + "] ";
+  public static String timestamp() {
+    return "[" + new java.text.SimpleDateFormat("HH.mm").format(new java.util.Date()) + "] ";
   }
 
   /* This creates an URL for emoticons: */
@@ -335,5 +322,5 @@ public class ClientGUI extends JApplet implements KeyListener {
   }
 
   /* Unused from keylistener: */
-  public void keyTyped(KeyEvent event) {}
+  public void keyTyped(java.awt.event.KeyEvent event) {}
 }

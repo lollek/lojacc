@@ -8,10 +8,6 @@ TO UPDATE:
     Add a button for smileys
     Make it possible to drag-drop images to the chat window
 
-  Scroll:
-    It's possible to mess upp the scroll bar it seems..
-    Maybe make it autoscroll to the bottom when there are new messages
-
   Spellcheck:
     If possible, add a swedish spellcheck
 
@@ -71,4 +67,6 @@ v0.2.5 @ 2013-07-04
   I may remove this after some testing
 v0.2.6 @ 2013-07-04
  Fixed bug causing browser title change despite chat being in focus
- 
+v0.2.7 @ 2013-07-08
+ Chat automatically scrolls down when a new message has arrived
+ Removed imports from code since it helps me learn java better 
