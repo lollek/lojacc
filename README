@@ -4,9 +4,6 @@ lojacc is the client part of my project on creating a chatserver + client.
 As a former IBM employee I really liked how pictures, smileys and "snapshots" worked in Sametime. As I'm also a bit of an IRC-fan, I would like to combine them a bit.
 
 TO UPDATE:
-  On received messages:
-    Window header should update
-
   Smileys:
     Add a button for smileys
     Make it possible to drag-drop images to the chat window
@@ -72,5 +69,6 @@ v0.2.5 @ 2013-07-04
  Also added a lib/java-plugin-1.6.0.23.jar since I need it to compile
   I've had some issues with IcedTea's plugin.jar, but it now seems like I can run the applet with it?
   I may remove this after some testing
-
+v0.2.6 @ 2013-07-04
+ Fixed bug causing browser title change despite chat being in focus
  

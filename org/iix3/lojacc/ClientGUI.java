@@ -34,7 +34,7 @@ import org.iix3.lojacc.ClientSocket;
 
 public class ClientGUI extends JApplet implements KeyListener {
 
-  final String welcome_info = "lojacc v0.2.5 (2013-07-04) by Olle K";
+  final String welcome_info = "lojacc v0.2.6 (2013-07-04) by Olle K";
 
   final private JTextArea wArea;
   final private HTMLDocument rAreaDoc;
@@ -102,7 +102,7 @@ public class ClientGUI extends JApplet implements KeyListener {
     mainGUI.add(tSizeButton, bCon);
 
     /* Aux Button*/
-    final JButton button = new JButton("Color");
+    final JButton button = new JButton("...");
     bCon.gridx = 1;
     bCon.insets = new Insets(0, 0, 0, 850);
     mainGUI.add(button, bCon);
@@ -156,7 +156,6 @@ public class ClientGUI extends JApplet implements KeyListener {
      It seems that this cannot safely be in the creator..*/
   public void setupJSObject() {
     try {
-      // this should be an Applet instead of JApplet?
       jsWindow = JSObject.getWindow(this);
       jsWindow.eval("setTitle(\"Lollian Chat\")");
     } catch (JSException e) {
@@ -236,10 +235,20 @@ public class ClientGUI extends JApplet implements KeyListener {
     /* Replace stuff in text: 
        Not sure if this C-style way of doing it works better than .replace()
        But since I'm replacing so much, it should be? */
+    boolean setBold = false;
     StringBuilder sb = new StringBuilder();
     char [] msgArr = msgString.toCharArray();
+
+    /* Add timestamp 
+       Write the text (in bold if it begins with <~): */
+    sb.append(timestamp());
+    if (msgArr.length >= 2 && msgArr[0] == '<' && msgArr[1] == '~') {
+      setBold = true;
+      sb.append("<b>");
+    }
+
     for (int i = 0; i < msgArr.length; i++) {
-      
+
       /* Escape some HTML: */
       if (msgArr[i] == '&') sb.append("&amp;");
       else if (msgArr[i] == '<') sb.append("&lt;");
@@ -282,26 +291,29 @@ public class ClientGUI extends JApplet implements KeyListener {
       
       else sb.append(msgString.charAt(i));
     }
+    if (setBold)
+      sb.append("</b>");
+    sb.append("\n<br>");
+
     msgString = sb.toString();
     
-    /* Write the text (in bold if it begins with <~): */
     try {
-      Element len = rAreaDoc.getParagraphElement(rAreaDoc.getLength());
-      if (msgString.substring(0, 5).equals("&lt;~"))
-        rAreaDoc.insertBeforeEnd(len, timestamp() + "<b> " + msgString + "\n</b><br>");
-      else
-        rAreaDoc.insertBeforeEnd(len, timestamp() + " " + msgString + "\n<br>");
+      final Element len = rAreaDoc.getParagraphElement(rAreaDoc.getLength());
+      rAreaDoc.insertBeforeEnd(len, msgString);
+      //rAreaDoc.setCaretPosition(rAreaDoc.getDocument().getLength());
     } 
-    catch(BadLocationException blError) {} 
-    catch(IOException ioError) {} 
+    catch(BadLocationException e) {} 
+    catch(IOException e) {} 
     catch(StringIndexOutOfBoundsException e) {}
 
     /* If window is not in focus; 
        play a click and update Title: */
-    if (!windowIsInFocus && audioClick != null)
-      audioClick.play();
-    if (jsWindow != null)
-      jsWindow.eval("setTitle(\"*New Message*\")");
+    if (!windowIsInFocus) { 
+      if (audioClick != null)
+        audioClick.play();
+      if (jsWindow != null)
+        jsWindow.eval("setTitle(\"*New Message*\")");
+    }
   }
 
   /* This refreshes the GUI CSS/style after changes have been made: */
@@ -314,7 +326,7 @@ public class ClientGUI extends JApplet implements KeyListener {
 
   /* This returns a timestamp: */
   public String timestamp() {
-    return "[" + dateFormat.format(new Date()) + "]";
+    return "[" + dateFormat.format(new Date()) + "] ";
   }
 
   /* This creates an URL for emoticons: */
