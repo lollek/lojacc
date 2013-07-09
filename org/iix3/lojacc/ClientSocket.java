@@ -1,56 +1,39 @@
-/* lojacc ClientSocket
- * This is a socket class for ClientGUI from the same package
- *
- * Scope is to connect to iix3.org @ port 7777, thus, everything is hardcoded
- * It should not be hard to change though
- */
-
 package org.iix3.lojacc;
 
-import java.net.Socket;
-import java.net.UnknownHostException;
+public class ClientSocket 
+  extends Thread {
 
-import java.io.BufferedReader;
-import java.io.BufferedOutputStream;
-import java.io.InputStreamReader;
-import java.io.IOException;
-
-import org.iix3.lojacc.ClientGUI;
-
-public class ClientSocket extends Thread {
-
-  final ClientGUI master;
-  Socket socket;
-
+  final org.iix3.lojacc.ClientGUI master;
+  final String HOSTNAME = "iix3.org";
+  final int PORT = 7777;
   boolean runThread = false;
+  java.net.Socket socket;
+  java.io.BufferedReader inBuff;
+  java.io.BufferedOutputStream outBuff;
 
-  BufferedReader inBuff;
-  BufferedOutputStream outBuff;
-
-  public ClientSocket(ClientGUI _master, String hostname, int port) {
+  public ClientSocket(ClientGUI _master) {
 
     master = _master;
-    master.chatPrint("Connecting to " + hostname);
+    master.chatPrint("Connecting to " + HOSTNAME);
 
     try {
-      socket = new Socket(hostname, port);
-      inBuff = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-      outBuff = new BufferedOutputStream(socket.getOutputStream());
+      socket = new java.net.Socket(HOSTNAME, PORT);
+      inBuff = new java.io.BufferedReader(
+        new java.io.InputStreamReader(
+          socket.getInputStream()));
+      outBuff = new java.io.BufferedOutputStream(socket.getOutputStream());
 
       master.chatPrint("Connection Established");
       runThread = true;
       
-    } catch(UnknownHostException uhError) {
-      master.chatPrint("Connection failed: " + uhError.getMessage());
-    } catch(IOException ioError) {
-      master.chatPrint("Connection failed: " + ioError.getMessage());
+    } catch(java.net.UnknownHostException e) {
+      master.chatPrint("Connection failed: " + e.getMessage());
+    } catch(java.io.IOException e) {
+      master.chatPrint("Connection failed: " + e.getMessage());
     }
 
     if (runThread)
       this.start();
-  }
-  public ClientSocket(ClientGUI _master) {
-    this(_master, "iix3.org", 7777);
   }
 
   public void run() {
@@ -58,12 +41,10 @@ public class ClientSocket extends Thread {
     String recvmsg = null;
     try {
       do {
-        if ((recvmsg = inBuff.readLine()) == null)
-          continue;
-        master.chatPrint(recvmsg);
-
+        if ((recvmsg = inBuff.readLine()) != null)
+          master.chatPrint(recvmsg);
       } while (recvmsg != null && runThread);
-    } catch (IOException e) {
+    } catch (java.io.IOException e) {
       kill();
     }
   }
@@ -73,7 +54,7 @@ public class ClientSocket extends Thread {
     try {
       outBuff.write(msgString.getBytes("UTF-8"));
       outBuff.flush();
-    } catch (IOException e) {
+    } catch (java.io.IOException e) {
       master.chatPrint("Error sending: " + e.getMessage() +
                        " - Try typing /reconnect in case you've lost connection");
     }
@@ -87,8 +68,8 @@ public class ClientSocket extends Thread {
     try {
       runThread = false;
       socket.close();
-      master.sock = null;
+      master.disconnectSocket();
       master.chatPrint("Disconnected from server - Type /reconnect to reconnect");
-    } catch (IOException ioError) {}
+    } catch (java.io.IOException e) {}
   }
 }

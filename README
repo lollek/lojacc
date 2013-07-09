@@ -70,3 +70,7 @@ v0.2.6 @ 2013-07-04
 v0.2.7 @ 2013-07-08
  Chat automatically scrolls down when a new message has arrived
  Removed imports from code since it helps me learn java better 
+v0.2.8 @ 2013-07-09
+ Split source into smaller parts
+ Whole window now counts as focus instead of just the write area
+ 

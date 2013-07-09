@@ -3,3 +3,4 @@ Makefile
 applet.policy
 img
 .*
+unused
